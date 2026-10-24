@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-REPO="Ronitdoes/fk-codetantra"
+REPO="Shresth2103/fk-codetantra"
 APP_NAME="MyOverlay"
 INSTALL_DIR="/Applications"
 PLIST_NAME="com.fkcodetantra.myoverlay.plist"
