@@ -3,6 +3,8 @@ import tkinter as tk
 import subprocess
 import pyperclip
 import os
+import threading
+from pynput import keyboard
 
 class MyOverlayApp:
     def __init__(self):
@@ -28,18 +30,18 @@ class MyOverlayApp:
         # Status / Instructions label
         self.status_label = tk.Label(
             self.root,
-            text="Click button below to Auto-Type",
+            text="Hotkey: Ctrl+Shift+V to Auto-Type",
             fg="#b0b0b0",
             bg="#1e1e1e",
             font=("Arial", 10)
         )
         self.status_label.pack(pady=2)
         
-        # Auto-Type Action Button
+        # Action Button (manual fallback)
         self.type_btn = tk.Button(
             self.root,
             text="🚀 Auto-Type Clipboard (3s delay)",
-            command=self.delayed_auto_type,
+            command=self.delayed_auto_type_threaded,
             bg="#2ecc71",
             fg="white",
             font=("Arial", 10, "bold"),
@@ -53,8 +55,10 @@ class MyOverlayApp:
         self.title_label.bind("<B1-Motion>", self.move_window)
         self.root.bind("<B1-Motion>", self.move_window)
 
-    def delayed_auto_type(self):
-        # Countdown to let user switch focus back to CodeTantra
+        # Start the global background hotkey listener
+        self.start_global_listener()
+
+    def execute_auto_type(self):
         clipboard_text = pyperclip.paste()
         if not clipboard_text:
             self.status_label.config(text="❌ Clipboard is empty!", fg="#e74c3c")
@@ -74,6 +78,24 @@ class MyOverlayApp:
         
         os.system(f"osascript -e '{applescript}'")
         self.status_label.config(text="✅ Auto-type complete!", fg="#2ecc71")
+
+    def delayed_auto_type_threaded(self):
+        # Run typing in a separate thread so the UI doesn't freeze
+        threading.Thread(target=self.execute_auto_type, daemon=True).start()
+
+    def start_global_listener(self):
+        def on_activate():
+            self.delayed_auto_type_threaded()
+
+        # Global hotkey combination (Ctrl + Shift + V)
+        hotkey_combo = '<ctrl>+<shift>+v'
+        
+        def listener_thread():
+            with keyboard.GlobalHotKeys({hotkey_combo: on_activate}) as listener:
+                listener.join()
+
+        t = threading.Thread(target=listener_thread, daemon=True)
+        t.start()
 
     def move_window(self, event):
         self.root.geometry(f"+{event.x_root}+{event.y_root}")
