@@ -79,5 +79,5 @@ class MyOverlayApp:
 
 
 if __name__ == "__main__":
-  app = MyOverlayApp()
-  app.run()
+    app = MyOverlayApp()
+    app.run()
